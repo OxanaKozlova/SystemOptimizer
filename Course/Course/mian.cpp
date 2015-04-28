@@ -4,8 +4,12 @@
 #include <cstdlib>
 #include <conio.h>
 #include "registry.h"
+#include <shlwapi.h>
+#include "findFunction.h"
 
 
+
+#define STRLEN(x) (sizeof(x)/sizeof(x[0]) - 1)
 
 
 using namespace std;
@@ -13,6 +17,8 @@ using namespace std;
 void getDisks();
 void menu();
 void cleanRegister();
+
+
 
 int main(){
 	menu();
@@ -34,6 +40,7 @@ void menu(){
 		switch (option) {
 		case 1:
 			cout << "Delete temp files" << endl;
+			findTempFile();
 			break;
 		case 2:
 			cout << "Clean registry" << endl;
@@ -41,8 +48,9 @@ void menu(){
 
 			break;
 		case 3:
-			getDisks();
-			cout << "Enter disk" << endl;
+			
+			cout << "Statistic" << endl;
+			findCategoryFiles();
 			break;
 
 		default:
@@ -59,7 +67,7 @@ void menu(){
 	}
 }
 
-void getDisks(){
+/*void getDisks(){
 	char str[25];
 	itoa(GetLogicalDrives(), str, 2);
 	char diskName;
@@ -69,7 +77,10 @@ void getDisks(){
 			cout << diskName << endl;
 		}
 	}
+	
+
+}*/
 
 
-}
+
 

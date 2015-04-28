@@ -1,5 +1,6 @@
 #include "registry.h"
 
+
 using namespace std;
 
 
@@ -46,7 +47,9 @@ int Find(HKEY hKey) {
 	TCHAR lpDataValue[MAX_PATH];
 	DWORD lpcbValueNameKey, lpcbValueNameValue, lpTypeValue, lpcbDataValue;
 	HKEY hKeyI;
+	
 	int i = 0;
+
 	for (;;) {
 		lpcbValueNameKey = sizeof(lpValueNameKey);
 		ErrorKey = RegEnumKeyEx(hKey, dwIndexKey, lpValueNameKey, &lpcbValueNameKey, NULL, NULL, NULL, NULL);
@@ -59,6 +62,8 @@ int Find(HKEY hKey) {
 					lpcbValueNameValue = MAX_PATH;
 					lpcbDataValue = sizeof(lpDataValue);
 					ErrorValue = RegEnumValue(hKey, dwIndexValue++, lpValueNameValue, &lpcbValueNameValue, NULL, &lpTypeValue, (LPBYTE)lpDataValue, &lpcbDataValue);
+					//wprintf_s(lpValueNameValue);
+					//printf("\n");
 					if (ErrorValue == ERROR_NO_MORE_ITEMS) {
 						break;
 					}
@@ -66,16 +71,19 @@ int Find(HKEY hKey) {
 					if (lpTypeValue == REG_SZ && IsFileName(lpDataValue) && !IsFileExist(lpDataValue)) {
 						Log(hKey, lpValueNameValue, lpDataValue, i);
 						i++;
-						countWrongValue++;
+						countWrongValue++;						
+						wprintf_s(lpValueNameValue);
+						printf("\n");
+						
 					}
 				}
 			}
 			break;
 		};
 
-		RegOpenKeyEx(hKey, lpValueNameKey, NULL, KEY_READ, &hKeyI);
-		Find(hKeyI);
-		RegCloseKey(hKeyI);
+		//RegOpenKeyEx(hKey, lpValueNameKey, NULL, KEY_READ, &hKeyI);
+		//Find(hKeyI);
+		//RegCloseKey(hKeyI);
 
 		++dwIndexKey;
 	}

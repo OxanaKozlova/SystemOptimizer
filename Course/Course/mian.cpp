@@ -30,7 +30,7 @@ int main(){
 void menu(){
 
 	while (1){
-		cout << "1 - delete temp files" << endl
+		cout << "1 - delete temp and cookies files" << endl
 			<< "2 - clean registry" << endl
 			<< "3 - show information" << endl << endl
 			<< "Enter option" << endl;
@@ -67,19 +67,7 @@ void menu(){
 	}
 }
 
-/*void getDisks(){
-	char str[25];
-	itoa(GetLogicalDrives(), str, 2);
-	char diskName;
-	for (int i = strlen(str) - 1, j = 0; j++, i >= 0; i--){
-		if (str[i] == '1'){
-			diskName = 64 + j;
-			cout << diskName << endl;
-		}
-	}
-	
 
-}*/
 
 
 

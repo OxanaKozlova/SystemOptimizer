@@ -9,7 +9,7 @@ TCHAR szBuff[MAX_LOADSTRING];
 
 int countWrongValue = 0;
 
-
+//RegDeleteValue
 
 
 #ifndef STATUS_SUCCESS

@@ -5,16 +5,16 @@
 
 
 
-void SearchOnAllDrives(HANDLE CONST hStdOut, LPWSTR CONST lpSearch, int offset);
-void RecursiveSearch(HANDLE CONST hStdOut, LPWSTR szPath,
+void SearchOnAllDrives(LPWSTR CONST lpSearch, int offset);
+void RecursiveSearch( LPWSTR szPath,
 	LPWSTR CONST lpSearch, int offset);
-
-void ProcessFoundFile(HANDLE CONST hStdOut, LPWSTR CONST szPath, 
+int ProcessFoundFiles(LPWSTR CONST szPath,
 	WIN32_FIND_DATA CONST * CONST fdFindData,
 	LPWSTR CONST lpSearch, int offset);
 
 void findTempFile();
 void findCategoryFiles();
 
-int countFiles(LPWSTR *list, int amountExtension, HANDLE  hStdOut);
+int countFiles(LPWSTR *list, int amountExtensio);
+void deleteFile(WIN32_FIND_DATA CONST * CONST fdFindData, HANDLE hFind, LPWSTR szPath);
 

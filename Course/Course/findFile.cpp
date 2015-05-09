@@ -7,7 +7,7 @@ int amountFiles = 0;
 int allFiles = 0;
 
 
-void ProcessFoundFile(HANDLE CONST hStdOut, LPWSTR CONST szPath,
+int ProcessFoundFiles(LPWSTR CONST szPath,
 	WIN32_FIND_DATA CONST * CONST fdFindData,
 	LPWSTR CONST lpSearch, int offset) {
 	TCHAR szEnd[] = L"\r\n"; 
@@ -15,18 +15,18 @@ void ProcessFoundFile(HANDLE CONST hStdOut, LPWSTR CONST szPath,
 	allFiles++;
 	PWSTR lastPosition = StrStrI(fdFindData->cFileName, lpSearch) + offset;
 	if (NULL != (lastPosition - offset) && *lastPosition == '\0') {
-		WriteConsole(hStdOut, szPath, lstrlen(szPath), &dwTemp, NULL);
+		WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), szPath, lstrlen(szPath), &dwTemp, NULL);
 		printf("\n");
 		amountFiles++;
-
-
+		return 0;
 	}
+	return 1;
 }
 
 
 
 
-void RecursiveSearch(HANDLE CONST hStdOut, LPWSTR szPath,
+void RecursiveSearch( LPWSTR szPath,
 	LPWSTR CONST lpSearch, int offset) {
 	WIN32_FIND_DATA fdFindData;
 	HANDLE hFind;
@@ -46,12 +46,19 @@ void RecursiveSearch(HANDLE CONST hStdOut, LPWSTR szPath,
 			continue;
 		}
 		lstrcat(szPath, fdFindData.cFileName);
+		WCHAR *temp = szPath;
+		LPCTSTR path = temp;
 		if (fdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			lstrcat(szPath, L"\\");
-			RecursiveSearch(hStdOut, szPath, lpSearch, offset);
+			//removeDirectory
+			if (!RemoveDirectory(path)); {
+				lstrcat(szPath, L"\\");
+				RecursiveSearch(szPath, lpSearch, offset);
+			}
 		}
 		else {
-			ProcessFoundFile(hStdOut, szPath, &fdFindData, lpSearch, offset);
+			if (!ProcessFoundFiles(szPath, &fdFindData, lpSearch, offset)){
+				deleteFile(&fdFindData, hFind, szPath);
+			}
 		}
 		*lpLastChar = '\0';
 	} while (FindNextFile(hFind, &fdFindData));
@@ -59,33 +66,34 @@ void RecursiveSearch(HANDLE CONST hStdOut, LPWSTR szPath,
 	FindClose(hFind);
 }
 
-void SearchOnAllDrives(HANDLE CONST hStdOut, LPWSTR CONST lpSearch, int offset) {
+void SearchOnAllDrives( LPWSTR CONST lpSearch, int offset) {
 	TCHAR szCurrDrive[] = L"A:\\";
 	TCHAR szPath[MAX_PATH + 1];
 	DWORD i, dwDisksMask = GetLogicalDrives();
-
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 7; i++) {
 		if (dwDisksMask & 1) {
 			lstrcpy(szPath, szCurrDrive);
-			RecursiveSearch(hStdOut, szPath, lpSearch, offset);
+			RecursiveSearch( szPath, lpSearch, offset);
 		}
 		dwDisksMask >>= 1;
 		szCurrDrive[0]++;
+		
+		
 	}
+	//RecursiveSearch(szPath, lpSearch, offset);
 }
 
 void findTempFile(){
-
-	HANDLE CONST hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	LPWSTR extention = L".tmp";
-	int offset = lstrlen(extention);
+	LPWSTR extention[] = { L"tmp", L".localstorage" };
+	int offset;
 	allFiles = 0;
+	int amountExtention = sizeof(extention) / sizeof(extention[0]);
+	for (int i = 0; i < amountExtention; i++){
+		offset = lstrlen(extention[i]);
+		SearchOnAllDrives(extention[i], offset);
+	}
 	
-	
-	SearchOnAllDrives(hStdOut, extention, offset);
-	LPWSTR  lpSearch = L".temp";
-	
-	printf("Found %d files/n", allFiles);
+	printf("Found %d files\n", allFiles);
 }
 
 
@@ -96,10 +104,10 @@ void findCategoryFiles(){
 	LPWSTR extensionDocuments[] = { L".doc", L".docx", L".pdf", L"xls", L"ppt", L".xlsx", L".odc" };
 	HANDLE CONST hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	int amountPhoto = countFiles(extensionPhoto, (sizeof(extensionPhoto) / sizeof(extensionPhoto[0])), hStdOut);
-	int amountVideo = countFiles(extensionVideo, (sizeof(extensionVideo) / sizeof(extensionVideo[0])), hStdOut);
-	int amountMusic = countFiles(extensionMusic, (sizeof(extensionMusic) / sizeof(extensionMusic[0])), hStdOut);
-	int amountDocuments = countFiles(extensionDocuments, (sizeof(extensionDocuments) / sizeof(extensionDocuments[0])), hStdOut);
+	int amountPhoto = countFiles(extensionPhoto, (sizeof(extensionPhoto) / sizeof(extensionPhoto[0])));
+	int amountVideo = countFiles(extensionVideo, (sizeof(extensionVideo) / sizeof(extensionVideo[0])));
+	int amountMusic = countFiles(extensionMusic, (sizeof(extensionMusic) / sizeof(extensionMusic[0])));
+	int amountDocuments = countFiles(extensionDocuments, (sizeof(extensionDocuments) / sizeof(extensionDocuments[0])));
 
 
 	
@@ -118,12 +126,12 @@ void findCategoryFiles(){
 }
 
 
-int countFiles(LPWSTR *list, int amountExtension, HANDLE  hStdOut ){
+int countFiles(LPWSTR *list, int amountExtension ){
 	int i = 0;
 	
 	while (i < amountExtension){
 		allFiles = 0;
-		SearchOnAllDrives(hStdOut, list[i], lstrlen(list[i]));
+		SearchOnAllDrives( list[i], lstrlen(list[i]));
 
 		i++;
 	}
@@ -131,3 +139,19 @@ int countFiles(LPWSTR *list, int amountExtension, HANDLE  hStdOut ){
 	amountFiles = 0;
 	return amount;
 }
+
+
+void deleteFile(WIN32_FIND_DATA CONST * CONST fdFindData, HANDLE hFind, LPWSTR szPath){
+	int isDeleted = 0;	
+	WCHAR *temp = szPath;
+	LPCTSTR str = temp;
+	HANDLE hOpen;
+	if (fdFindData->dwFileAttributes != FILE_ATTRIBUTE_READONLY || fdFindData->dwFileAttributes != FILE_ATTRIBUTE_SYSTEM){
+		//hOpen = CreateFile(str, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+		if (!DeleteFile(szPath)){
+			printf("Failed to delete the file. try to close\n");
+		}
+	}
+	else printf("File is protected\n");
+}
+
